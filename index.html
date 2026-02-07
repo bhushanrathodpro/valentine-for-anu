@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Be My Valentine 💜</title>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<style>
+body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  background: white;
+  padding: 28px;
+  border-radius: 22px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  max-width: 380px;
+  width: 95%;
+  z-index: 2;
+}
+
+h1 {
+  color: #7b2cbf;
+  font-size: 1.4rem;
+  white-space: nowrap;
+}
+
+p {
+  color: #444;
+  font-size: 16px;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+button {
+  padding: 14px 26px;
+  font-size: 18px;
+  border: none;
+  border-radius: 40px;
+  cursor: pointer;
+}
+
+#yesBtn {
+  background: #7b2cbf;
+  color: white;
+  box-shadow: 0 0 0 rgba(123,44,191,0);
+  transition: box-shadow 0.6s ease, transform 0.3s ease;
+}
+
+#noBtn {
+  background: #e0e0e0;
+  color: #333;
+  transition: all 0.6s ease;
+}
+
+/* YES glow animation */
+.yes-glow {
+  animation: glowPulse 1.5s infinite;
+}
+
+@keyframes glowPulse {
+  0% { box-shadow: 0 0 10px rgba(123,44,191,0.4); }
+  50% { box-shadow: 0 0 25px rgba(123,44,191,0.9); transform: scale(1.05); }
+  100% { box-shadow: 0 0 10px rgba(123,44,191,0.4); }
+}
+
+/* CHAOS MODE */
+.no-chaos {
+  position: fixed;
+  z-index: 3;
+  animation: vibrate 0.15s infinite;
+}
+
+@keyframes vibrate {
+  0% { transform: translate(0); }
+  25% { transform: translate(-1px, 1px); }
+  50% { transform: translate(1px, -1px); }
+  75% { transform: translate(-1px, -1px); }
+  100% { transform: translate(1px, 1px); }
+}
+
+.hidden { display: none; }
+
+/* Cursor */
+.cursor {
+  display: inline-block;
+  width: 2px;
+  height: 18px;
+  background: #7b2cbf;
+  animation: blink 1s infinite;
+  margin-left: 3px;
+}
+
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0; }
+}
+
+/* Floating hearts */
+.heart-bg {
+  position: absolute;
+  bottom: -40px;
+  animation: floatUp 8s linear infinite;
+  opacity: 0.6;
+}
+
+@keyframes floatUp {
+  0% { transform: translateY(0); opacity: 0; }
+  10% { opacity: 0.6; }
+  100% { transform: translateY(-110vh); opacity: 0; }
+}
+</style>
+</head>
+
+<body>
+
+<audio autoplay loop>
+  <source src="music.mp3" type="audio/mpeg">
+</audio>
+
+<!-- QUESTION CARD -->
+<div class="card" id="questionCard">
+  <h1>Will you be my Valentine, Anu 💜?</h1>
+  <p id="warningText"></p>
+
+  <div class="buttons">
+    <button id="yesBtn">Yes 💜</button>
+    <button id="noBtn">No 🙃</button>
+  </div>
+</div>
+
+<!-- LOVE LETTER CARD -->
+<div class="card hidden" id="loveCard">
+  <h1>My Dearest Anu 💜</h1>
+  <p id="typedText"></p><span class="cursor" id="cursor"></span>
+  <p id="signature" style="margin-top:22px;font-weight:bold;"></p>
+</div>
+
+<script>
+const noBtn = document.getElementById("noBtn");
+const yesBtn = document.getElementById("yesBtn");
+const warningText = document.getElementById("warningText");
+const questionCard = document.getElementById("questionCard");
+const loveCard = document.getElementById("loveCard");
+const typedText = document.getElementById("typedText");
+const cursor = document.getElementById("cursor");
+const signature = document.getElementById("signature");
+
+let attempts = 0;
+let chaos = false;
+
+const letter = `Loving you feels like finding home in a person.
+Every smile, every laugh, every quiet moment with you
+makes my world softer and brighter.
+
+This isn’t just a Valentine’s question.
+It’s my heart choosing you — today, tomorrow,
+and every day I get lucky enough to love you.
+
+Thank you for being my favorite person,
+my safe place, and my greatest happiness.`;
+
+// Mobile heartbeat vibration
+function heartbeat() {
+  if (navigator.vibrate) {
+    navigator.vibrate([100, 80, 100]);
+  }
+}
+
+// Voice begging
+function beg(text) {
+  heartbeat();
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.pitch = 1.3;
+  msg.rate = 0.95;
+  speechSynthesis.speak(msg);
+}
+
+// NO BUTTON LOGIC
+function handleNo() {
+  attempts++;
+  heartbeat();
+
+  if (attempts <= 3) {
+    slideNo();
+    return;
+  }
+
+  if (attempts <= 5) {
+    fakeAlmost();
+    return;
+  }
+
+  if (!chaos) {
+    chaos = true;
+    noBtn.classList.add("no-chaos");
+    yesBtn.classList.add("yes-glow"); // YES starts glowing
+  }
+
+  teleportNo();
+
+  if (attempts === 10) {
+    warningText.innerText =
+      "It’s over 😭 You don’t have any other option. Just say YES already pls pls 💜";
+    beg("Anu please say yes");
+  }
+  if (attempts === 15) {
+    warningText.innerText =
+      "Okay seriously 😩 just click yes already";
+    beg("Please click yes");
+  }
+  if (attempts === 20) {
+    warningText.innerText =
+      "Fine 😮‍💨 take a break";
+  }
+  if (attempts > 20 && (attempts - 20) % 5 === 0) {
+    warningText.innerText =
+      "BREAK OVER 😤 pls pls pls say YES 💜";
+    beg("Break is over please say yes");
+  }
+}
+
+function slideNo() {
+  const rect = noBtn.getBoundingClientRect();
+  noBtn.style.left = rect.left + 70 + "px";
+}
+
+function fakeAlmost() {
+  noBtn.style.left = Math.random() * 60 + "vw";
+  noBtn.style.top = Math.random() * 60 + "vh";
+}
+
+function teleportNo() {
+  noBtn.style.left = Math.random() * (window.innerWidth - 120) + "px";
+  noBtn.style.top = Math.random() * (window.innerHeight - 60) + "px";
+}
+
+noBtn.addEventListener("mouseenter", handleNo);
+noBtn.addEventListener("touchstart", handleNo);
+noBtn.addEventListener("click", handleNo);
+
+// LETTER TYPING
+function typeLetter() {
+  let i = 0;
+  typedText.textContent = "";
+
+  const interval = setInterval(() => {
+    typedText.textContent += letter[i];
+    i++;
+    if (i >= letter.length) {
+      clearInterval(interval);
+      cursor.style.display = "none";
+      setTimeout(typeSignature, 700);
+    }
+  }, 40);
+}
+
+function typeSignature() {
+  const text = "Forever yours,\nBhushan 💜";
+  let i = 0;
+  signature.textContent = "";
+
+  const interval = setInterval(() => {
+    signature.textContent += text[i];
+    i++;
+    if (i >= text.length) clearInterval(interval);
+  }, 60);
+}
+
+// YES BUTTON
+yesBtn.addEventListener("click", () => {
+  questionCard.classList.add("hidden");
+  loveCard.classList.remove("hidden");
+  typeLetter();
+
+  confetti({
+    particleCount: 200,
+    spread: 120,
+    colors: ['#7b2cbf', '#9d4edd', '#c77dff'],
+    shapes: ['heart']
+  });
+});
+
+// Floating hearts
+setInterval(() => {
+  const heart = document.createElement("div");
+  heart.className = "heart-bg";
+  heart.innerText = "💜";
+  heart.style.left = Math.random() * 100 + "vw";
+  heart.style.fontSize = 18 + Math.random() * 20 + "px";
+  document.body.appendChild(heart);
+  setTimeout(() => heart.remove(), 8000);
+}, 500);
+</script>
+
+</body>
+</html>
